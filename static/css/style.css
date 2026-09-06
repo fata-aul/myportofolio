@@ -168,6 +168,209 @@ h1, .brand {
     border-radius: var(--radius);
     border: 3px solid var(--ink);
 }
+.experience {
+    padding: 3rem 0 5rem;
+    border-top: 1px solid var(--line);
+}
+
+.section-kicker {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-dark);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.section-title {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    margin-bottom: 2.5rem;
+}
+
+.experience-group {
+    margin-bottom: 2.5rem;
+}
+
+.experience-group:last-child {
+    margin-bottom: 0;
+}
+
+.experience-group-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.experience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.experience-card {
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-left-width 0.2s ease;
+}
+
+.experience-card:hover {
+    transform: translateX(6px);
+    box-shadow: 0 6px 16px rgba(28, 25, 23, 0.08);
+    border-left-width: 6px;
+}
+
+.experience-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.experience-card-head h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.experience-period {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.experience-org {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent-dark);
+    margin-bottom: 0.4rem;
+}
+
+.experience-desc {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+.education {
+    padding: 0 0 5rem;
+    border-top: 1px solid var(--line);
+    padding-top: 3rem;
+}
+
+.education-timeline {
+    position: relative;
+    height: 380px;
+    margin-top: 2.5rem;
+}
+
+.timeline-path {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.timeline-arrow {
+    fill: none;
+    stroke: var(--accent-dark);
+    stroke-width: 4;
+    stroke-dasharray: 6 6;
+}
+
+.timeline-node {
+    position: absolute;
+    width: 200px;
+}
+
+.timeline-node.pos-1 {
+    left: 16%;
+    top: 40%;
+    transform: translate(-50%, calc(-100% - 14px));
+}
+
+.timeline-node.pos-2 {
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, 14px);
+}
+
+.timeline-node.pos-3 {
+    left: 84%;
+    top: 40%;
+    transform: translate(-50%, calc(-100% - 14px));
+}
+
+.timeline-card {
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(28, 25, 23, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(28, 25, 23, 0.12);
+}
+
+.timeline-card h4 {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: 1rem;
+    margin-bottom: 0.15rem;
+}
+
+.timeline-card p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.timeline-card span {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-dark);
+}
+
+/* Di bawah 800px, tampilan kurva diganti jadi list vertikal simpel — gaya sama seperti .experience-card */
+@media (max-width: 800px) {
+    .education-timeline {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .timeline-path {
+        display: none;
+    }
+
+    .timeline-node,
+    .timeline-node.pos-1,
+    .timeline-node.pos-2,
+    .timeline-node.pos-3 {
+        position: static;
+        left: auto;
+        top: auto;
+        transform: none;
+        width: 100%;
+    }
+
+    .timeline-node .timeline-card {
+        text-align: left;
+        border-left: 5px solid var(--accent);
+    }
+}
+
 .site-footer {
     padding: 1.5rem;
     color: var(--text-muted);
@@ -190,5 +393,10 @@ h1, .brand {
 
     .social-links {
         justify-content: flex-start;
+    }
+
+    .experience-card-head {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

@@ -1,2 +1,2 @@
-Nama : Fata Aulia
+Nama : Fata Akhmad Aulia
 kelas : PBP G
