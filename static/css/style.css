@@ -454,3 +454,48 @@ h1, .brand {
     font-size: 0.85rem;
     font-weight: 600;
 }
+
+.academic-section {
+    padding: 4rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.academic-section h1 {
+    margin: 0.2rem 0 1.5rem;
+    font-size: 4rem;
+}
+
+.academic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.academic-card {
+    padding: 1.25rem;
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.academic-level {
+    color: var(--accent-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.academic-card h2 {
+    margin: 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.academic-description {
+    color: var(--text-muted);
+}
+
+.academic-status {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
