@@ -266,45 +266,30 @@ h1, .brand {
 
 .education-timeline {
     position: relative;
-    height: 380px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
     margin-top: 2.5rem;
+    padding-top: 1.5rem;
 }
 
-.timeline-path {
+.education-timeline::before {
+    content: "";
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.timeline-arrow {
-    fill: none;
-    stroke: var(--accent-dark);
-    stroke-width: 4;
-    stroke-dasharray: 6 6;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-image: linear-gradient(to right, var(--accent-dark) 60%, transparent 0%);
+    background-size: 14px 3px;
+    background-repeat: repeat-x;
 }
 
 .timeline-node {
-    position: absolute;
-    width: 200px;
-}
-
-.timeline-node.pos-1 {
-    left: 16%;
-    top: 40%;
-    transform: translate(-50%, calc(-100% - 14px));
-}
-
-.timeline-node.pos-2 {
-    left: 50%;
-    top: 46%;
-    transform: translate(-50%, 14px);
-}
-
-.timeline-node.pos-3 {
-    left: 84%;
-    top: 40%;
-    transform: translate(-50%, calc(-100% - 14px));
+    position: relative;
+    z-index: 1;
+    flex: 0 1 220px;
 }
 
 .timeline-card {
@@ -322,6 +307,17 @@ h1, .brand {
     box-shadow: 0 10px 20px rgba(28, 25, 23, 0.12);
 }
 
+.timeline-logo {
+    display: block;
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 0.6rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    background-color: #fff;
+}
+
 .timeline-card h4 {
     font-family: "Space Grotesk", -apple-system, sans-serif;
     font-size: 1rem;
@@ -333,6 +329,11 @@ h1, .brand {
     color: var(--text-muted);
 }
 
+.timeline-desc {
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+}
+
 .timeline-card span {
     display: inline-block;
     margin-top: 0.3rem;
@@ -341,33 +342,34 @@ h1, .brand {
     color: var(--accent-dark);
 }
 
-/* Di bawah 800px, tampilan kurva diganti jadi list vertikal simpel — gaya sama seperti .experience-card */
+.timeline-status {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+/* Di bawah 800px, timeline jadi list vertikal simpel — gaya sama seperti .experience-card */
 @media (max-width: 800px) {
     .education-timeline {
         height: auto;
-        display: flex;
         flex-direction: column;
-        gap: 1.25rem;
     }
 
-    .timeline-path {
+    .education-timeline::before {
         display: none;
     }
 
-    .timeline-node,
-    .timeline-node.pos-1,
-    .timeline-node.pos-2,
-    .timeline-node.pos-3 {
-        position: static;
-        left: auto;
-        top: auto;
-        transform: none;
-        width: 100%;
+    .timeline-node {
+        max-width: 100%;
     }
 
     .timeline-node .timeline-card {
         text-align: left;
         border-left: 5px solid var(--accent);
+    }
+
+    .timeline-logo {
+        margin: 0 0 0.6rem;
     }
 }
 
@@ -401,101 +403,6 @@ h1, .brand {
     }
 }
 
-.experience-section {
-    padding: 4rem 0;
-    border-top: 1px solid var(--line);
-}
-
-.section-kicker {
-    color: var(--accent-dark);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.experience-section h1 {
-    margin: 0.2rem 0 1.5rem;
-    font-size: 4rem;
-}
-
-.experience-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
-}
-
-.experience-card {
-    padding: 1.25rem;
-    background-color: #fff;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-}
-
-.experience-category {
-    color: var(--accent-dark);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.experience-card h2 {
-    margin: 0.5rem 0;
-    font-size: 1.25rem;
-}
-
-.experience-description,
 .empty-state {
     color: var(--text-muted);
-}
-
-.experience-status {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.academic-section {
-    padding: 4rem 0;
-    border-top: 1px solid var(--line);
-}
-
-.academic-section h1 {
-    margin: 0.2rem 0 1.5rem;
-    font-size: 4rem;
-}
-
-.academic-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
-}
-
-.academic-card {
-    padding: 1.25rem;
-    background-color: #fff;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-}
-
-.academic-level {
-    color: var(--accent-dark);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.academic-card h2 {
-    margin: 0.5rem 0;
-    font-size: 1.25rem;
-}
-
-.academic-description {
-    color: var(--text-muted);
-}
-
-.academic-status {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    font-weight: 600;
 }

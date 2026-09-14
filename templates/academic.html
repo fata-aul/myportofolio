@@ -22,39 +22,41 @@
     </header>
 
     <main>
-    <section class="academic-section" id="academic">
-        <div class="container">
-            <p class="section-kicker">My educational background</p>
-            <h1>Academic Records</h1>
+        <section class="education" id="academic">
+            <div class="container">
+                <p class="section-kicker">My educational background</p>
+                <h2 class="section-title">Academic Records</h2>
 
-            <div class="academic-grid">
-                {% for record in academic_list %}
-                    <article class="academic-card">
-                        <span class="academic-level">
-                            {{ record.get_level_display }}
-                        </span>
-                        <h2>{{ record.institution }}</h2>
-                        {% if record.description %}
-                            <p class="academic-description">
-                                {{ record.description }}
-                            </p>
-                        {% endif %}
-
-                        {% if record.is_ongoing %}
-                            <p class="academic-status">Ongoing</p>
-                        {% else %}
-                            <p class="academic-status">Completed</p>
-                        {% endif %}
-                    </article>
-                {% empty %}
-                    <p class="empty-state">
-                        No academic record has been added yet.
-                    </p>
-                {% endfor %}
+                {% if academic_list %}
+                    <div class="education-timeline">
+                        {% for record in academic_list %}
+                            <div class="timeline-node">
+                                <div class="timeline-card">
+                                    {% if record.logo %}
+                                        <img class="timeline-logo" src="{{ record.logo }}" alt="{{ record.institution }} logo">
+                                    {% endif %}
+                                    <h4>{{ record.get_level_display }}</h4>
+                                    <p>{{ record.institution }}</p>
+                                    {% if record.description %}
+                                        <p class="timeline-desc">{{ record.description }}</p>
+                                    {% endif %}
+                                    <span>
+                                        {{ record.started_at|date:"Y" }} &ndash;
+                                        {% if record.ended_at %}{{ record.ended_at|date:"Y" }}{% else %}Ongoing{% endif %}
+                                    </span>
+                                    <p class="timeline-status">
+                                        {% if record.is_ongoing %}Ongoing{% else %}Completed{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-state">No academic record has been added yet.</p>
+                {% endif %}
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 
     <footer class="site-footer">
         <div class="container">

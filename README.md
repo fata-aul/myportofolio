@@ -33,3 +33,52 @@ Cara saya menentukan mana yang perlu diubah: saya lihat bagian mana yang ukurann
 3. Karena websitenya masih static (isinya ditulis langsung di file HTML), kalau saya mau update sesuatu  misalnya nambah pengalaman baru atau ganti riwayat sekolah saya harus buka lagi file HTML-nya terus edit manual satu-satu. Ini kurang praktis kalau kontennya sering berubah, dan lumayan ribet karena formatnya berulang-ulang jadi gampang salah ketik atau lupa update salah satu bagian.
 
 Untuk pengembangan selanjutnya, saya pengen nambahin sesuatu yang lebih dinamis, misalnya bikin data pengalaman dan riwayat pendidikan itu tersimpan terpisah (bukan ditulis langsung di HTML), jadi kalau mau update tinggal ganti datanya aja tanpa perlu edit ulang tampilan HTML dan cssnya.
+
+
+
+
+
+
+### Tugas 2
+
+Lanjut dari rencana pengembangan yang saya tulis di poin 3 Tugas 1, kali ini saya coba beneran mindahin section Experience dan Academic Records yang sebelumnya masih hardcode di index.html supaya datanya bisa disimpan di database dan gak perlu ditulis manual lagi di HTML.
+
+Awalnya saya masih bingung modelnya mau ditaruh dimana, akhirnya saya putuskan untuk taruh di app main yang sudah ada aja supaya gak perlu bikin app baru dulu. Setelah itu saya coba ngerjainnya step-by-step, mulai dari bikin model di models.py, lalu menjalankan makemigrations dan migrate. Setelah itu saya bikin view yang tugasnya mengambil data dari database dan mengirimkannya ke template, lalu saya daftarkan urlnya dan menambahkan link-nya ke navbar. Sempat ada masalah karena saya lupa menjalankan migrate, jadi waktu dibuka muncul error no such table. Ternyata migration filenya sudah ada, tapi tabelnya belum dibuat di database karena migratenya belum dijalankan.
+
+Setelah section Experience-nya berhasil dibuat, saya merasa tampilannya bakal lebih rapi kalau pengalaman saya dikelompokkan berdasarkan kategorinya, misalnya Internship, Volunteer, dan lain-lain seperti desain awal yang saya buat. Jadi saya menambahkan field organization di model supaya nama perusahaan atau organisasinya bisa dipisahkan dari judul perannya. Setelah itu saya ubah bagian view supaya datanya bisa dikelompokkan otomatis berdasarkan kategori sebelum dikirim ke template.
+
+
+
+1. Alur yang terjadi ketika halaman portofolio baru, misalnya Academic Records, dibuka kira-kira seperti ini:
+
+* Pertama browser mengirim request ke server, misalnya GET /academic/.
+* Request tersebut pertama masuk ke urls.py yang ada di project (portofolio/urls.py). Di sini Django akan mengecek path yang diminta cocok dengan pola URL yang mana. Karena academic/ diarahkan ke app main, request tersebut diteruskan ke urls.py yang ada di app main.
+* Setelah masuk ke main/urls.py, Django mencari lagi URL yang sesuai. Karena menemukan path("academic/", show_academic, name="show_academic"), akhirnya function show_academic yang ada di views.py` dipanggil.
+* Di dalam view show_academic, Django mengambil data dari model AcademicRecord menggunakan AcademicRecord.objects.all(). Data yang diambil ini masih berupa objek Python atau QuerySet dari database.
+* Setelah itu data tersebut dimasukkan ke dalam ontext, lalu view menggunakan render()untuk menentukan template yang akan digunakan, yaitu academic.html, sekaligus mengirimkan context tadi.
+* Setelah template diproses oleh Django, setiap data di dalam context akan di-loop menggunakan {% for %} dan dimasukkan ke bagian HTML yang sesuai.
+* Setelah semuanya selesai, hasil HTML tersebut dikirim kembali ke browser dan akhirnya halaman Academic Records bisa ditampilkan ke user.
+
+Jadi kalau disimpulkan, alurnya dimulai dari urls.py project yang menentukan app mana yang menangani request, lalu urls.py di app menentukan view mana yang dipanggil. Setelah itu view mengambil data dari model dan menentukan template yang digunakan. Terakhir, template menampilkan data tersebut menjadi HTML yang dikirim kembali ke browser.
+
+2. Data untuk bagian portofolio baru menurut saya lebih baik disimpan di model daripada ditulis langsung di template karena sebelumnya saya sendiri sudah merasakan ribetnya ketika masih menggunakan hardcode di index.html.
+
+Kalau datanya masih ditulis langsung di template, setiap kali saya ingin menambah, mengubah, atau menghapus data, misalnya menambahkan pengalaman kerja baru, saya harus membuka file HTML dan mengeditnya secara manual. Karena formatnya juga berulang-ulang, jadi lebih gampang salah ketik atau lupa mengubah salah satu bagian.
+
+Sedangkan kalau datanya disimpan di model, data dan tampilan bisa dipisahkan. Jadi kalau saya ingin menambahkan data baru, saya cukup menggunakan Model.objects.create(...) lewat shell atau admin tanpa perlu mengubah template atau CSS-nya. Menurut saya ini juga bikin kode jadi lebih rapi karena bagian data dan bagian tampilannya gak tercampur.
+
+Selain itu, karena datanya sudah ada di database, data tersebut juga bisa digunakan lagi di bagian lain. Misalnya saya ingin menampilkan ringkasan pengalaman di halaman utama, saya gak perlu menulis data yang sama dari awal.
+Menurut saya cara ini juga lebih mudah untuk di-test karena saya bisa membuat data dummy menggunakan Model.objects.create() di unit test lalu mengecek apakah data tersebut berhasil muncul di response. Kalau datanya masih hardcode di HTML, menurut saya bakal lebih susah untuk melakukan testing seperti itu.
+
+Kalau nanti datanya semakin banyak dan saya ingin mengurutkan atau memfilter data, misalnya berdasarkan tanggal terbaru, saya juga tinggal menggunakan query dari model seperti .order_by() atau .filter()``````````` daripada harus mengaturnya satu-satu di HTML.
+
+Jadi menurut saya, menggunakan model membuat website lebih gampang dipelihara karena kalau mau update isi portofolio saya gak harus mengubah kode tampilan lagi. Selain itu, ke depannya juga lebih fleksibel karena data dan tampilannya sudah dipisahkan.
+
+3. Perbedaan makemigrations dan migrate yang saya pahami adalah:
+
+* makemigrations digunakan untuk membuat semacam blueprint atau instruksi perubahan berdasarkan perubahan yang saya buat di models.py. Jadi Django akan melihat perubahan pada model saya lalu membuat file migration baru. Pada tahap ini database belum benar-benar berubah.
+* Sedangkan migrate digunakan untuk menjalankan file migration tersebut ke database. Jadi perubahan seperti membuat tabel baru atau menambahkan kolom baru baru benar-benar diterapkan ke database setelah saya menjalankan migrate`.
+
+Jadi urutannya adalah makemigrations dulu baru migrate Saya harus membuat file migration-nya terlebih dahulu sebelum menjalankan perubahan tersebut ke database.
+
+Contoh perubahan model yang saya lakukan adalah ketika saya menambahkan field logo di model AcademicRecord dan field organization di model Experience.

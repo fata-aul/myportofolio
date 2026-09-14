@@ -17,9 +17,20 @@ def show_main(request):
 
 
 def show_experience(request):
+    experiences = Experience.objects.all()
+
+    groups = []
+    group_by_label = {}
+    for experience in experiences:
+        label = experience.get_category_display()
+        if label not in group_by_label:
+            group_by_label[label] = {"label": label, "items": []}
+            groups.append(group_by_label[label])
+        group_by_label[label]["items"].append(experience)
+
     context = {
         "name": "Fata",
-        "experience_list": Experience.objects.all(),
+        "experience_groups": groups,
     }
     return render(request, "experience.html", context)
 
