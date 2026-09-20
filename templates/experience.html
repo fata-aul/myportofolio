@@ -1,67 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience - {{nama_lengkap}}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{nama_lengkap}}</a>
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_academic' %}">Academic Records</a>
-            </nav>
-        </div>
-    </header>
-
+{% extends "base.html" %}
+{% block meta %}
+    <title>Experience - {{ nama_lengkap }}</title>
+{% endblock meta %}
+{% block content %}
     <main>
         <section class="experience" id="experience">
             <div class="container">
                 <p class="section-kicker">My journey so far</p>
-                <h2 class="section-title">Experience</h2>
+
+                <div class="experience-head">
+                    <h2 class="section-title">Experience</h2>
+                    <a href="{% url 'main:create_experience' %}" class="button button-add">
+                        <span aria-hidden="true">+</span> Tambah Pengalaman
+                    </a>
+                </div>
+
+                <form method="get"
+                      action="{% url 'main:show_experience' %}"
+                      class="experience-search">
+                    <input type="search"
+                           name="title"
+                           value="{{ title_query }}"
+                           placeholder="Cari pengalaman&hellip;"
+                           class="experience-search__input"
+                           aria-label="Cari berdasarkan nama pengalaman">
+                    <button type="submit" class="button">Cari</button>
+                </form>
+
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li class="message">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
 
                 {% for group in experience_groups %}
                     <div class="experience-group">
                         <h3 class="experience-group-title">{{ group.label }}</h3>
                         <div class="experience-list">
                             {% for experience in group.items %}
-                                <div class="experience-card">
-                                    <div class="experience-card-head">
-                                        <h4>{{ experience.title }}</h4>
-                                        <span class="experience-period">
-                                            {{ experience.started_at|date:"M Y" }} &ndash;
-                                            {% if experience.ended_at %}{{ experience.ended_at|date:"M Y" }}{% else %}Ongoing{% endif %}
-                                        </span>
-                                    </div>
-                                    {% if experience.organization %}
-                                        <p class="experience-org">{{ experience.organization }}</p>
+                                <article class="experience-card">
+                                    {% if experience.thumbnail %}
+                                        <img src="{{ experience.thumbnail }}"
+                                             alt="Gambar {{ experience.title }}"
+                                             class="experience-thumb">
                                     {% endif %}
-                                    <p class="experience-desc">{{ experience.description }}</p>
-                                    <p class="experience-status">
-                                        {% if experience.is_ongoing %}Ongoing{% else %}Completed{% endif %}
-                                    </p>
-                                </div>
+                                    <div class="experience-card-body">
+                                        <div class="experience-card-head">
+                                            <h4>{{ experience.title }}</h4>
+                                            <span class="experience-period">
+                                                {% if experience.started_at %}{{ experience.started_at|date:"M Y" }}{% endif %}
+                                                &ndash;
+                                                {% if experience.ended_at %}{{ experience.ended_at|date:"M Y" }}{% else %}Sekarang{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if experience.organization %}
+                                            <p class="experience-org">{{ experience.organization }}</p>
+                                        {% endif %}
+                                        <p class="experience-desc">{{ experience.description }}</p>
+                                        <div class="experience-card-foot">
+                                            <span class="status-pill {% if experience.is_ongoing %}status-pill--ongoing{% endif %}">
+                                                {% if experience.is_ongoing %}Ongoing{% else %}Completed{% endif %}
+                                            </span>
+                                            {% include "components/experience_delete_modal.html" with experience=experience %}
+                                        </div>
+                                    </div>
+                                </article>
                             {% endfor %}
                         </div>
                     </div>
                 {% empty %}
-                    <p class="empty-state">No experience has been added yet.</p>
+                    {% if title_query %}
+                        <p class="empty-state">Tidak ada pengalaman dengan nama tersebut.</p>
+                    {% else %}
+                        <p class="empty-state">Belum ada pengalaman yang ditambahkan.</p>
+                    {% endif %}
                 {% endfor %}
             </div>
         </section>
     </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 {{name}}. Ilmu Komputer, Universitas Indonesia.</p>
-        </div>
-    </footer>
-</body>
-</html>
+{% endblock content %}

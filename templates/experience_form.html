@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>Add Experience - {{ nama_lengkap }}</title>
+{% endblock meta %}
+{% block content %}
+    <main>
+        <section class="experience">
+            <div class="container">
+                <p class="section-kicker">Tambahkan pengalaman barumu</p>
+                <h2 class="section-title">Add New Experience</h2>
+
+                <div class="form-wrap">
+                    <div class="form-decor" aria-hidden="true"></div>
+                    <div class="form-decor-dot" aria-hidden="true"></div>
+                    <form method="post"
+                          action="{% url 'main:create_experience' %}"
+                          class="form-card">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="form-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <div class="form-actions">
+                            <a href="{% url 'main:show_experience' %}" class="button button-secondary">Batal</a>
+                            <button type="submit" class="button">Simpan Pengalaman</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock content %}

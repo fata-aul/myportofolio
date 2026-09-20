@@ -1,52 +1,62 @@
-from django.forms import ModelForm, TextInput, Textarea, URLInput
+from django.forms import DateInput, ModelForm, Select, Textarea, TextInput, URLInput
 
-from main.models import Project
+from main.models import Experience
 
-class ProjectForm(ModelForm):
+
+class ExperienceForm(ModelForm):
     class Meta:
-        model = Project
+        model = Experience
         fields = [
             "title",
+            "organization",
             "description",
-            "tech_stack",
-            "project_url",
-            "project_image_url",
+            "category",
+            "thumbnail",
+            "started_at",
+            "ended_at",
         ]
 
         labels = {
-            "title": "Nama Proyek",
-            "description": "Deskripsi Proyek",
-            "tech_stack": "Teknologi yang Digunakan",
-            "project_url": "URL Proyek",
-            "project_image_url": "URL Gambar Proyek",
+            "title": "Nama Pengalaman",
+            "organization": "Organisasi / Perusahaan",
+            "description": "Deskripsi Pengalaman",
+            "category": "Kategori",
+            "thumbnail": "URL Gambar",
+            "started_at": "Tanggal Mulai",
+            "ended_at": "Tanggal Selesai (kosongkan jika masih berjalan)",
         }
 
         widgets = {
             "title": TextInput(
                 attrs={
-                    "placeholder": "Portfolio Website",
+                    "placeholder": "Backend Developer Intern",
+                    "maxlength": 255,
+                }
+            ),
+            "organization": TextInput(
+                attrs={
+                    "placeholder": "Fakultas Ilmu Komputer UI",
                     "maxlength": 255,
                 }
             ),
             "description": Textarea(
                 attrs={
-                    "placeholder": "Ceritakan Proyekmu",
+                    "placeholder": "Ceritakan apa yang kamu kerjakan di sini",
                     "rows": 3,
                 }
             ),
-            "tech_stack": TextInput(
-                attrs={
-                    "placeholder": "Django, Python, HTML, CSS",
-                }
-            ),
-            "project_url": URLInput(
-                attrs={
-                    "placeholder": "https://github.com/kakBurhan/burhanquestv4",
-                }
-            ),
-            "project_image_url": URLInput(
+            "category": Select(),
+            "thumbnail": URLInput(
                 attrs={
                     "placeholder": "https://drive.google.com/thumbnail?id=...&sz=w1000",
                 }
             ),
-        }   
+            "started_at": DateInput(
+                attrs={"type": "date"},
+                format="%Y-%m-%d",
+            ),
+            "ended_at": DateInput(
+                attrs={"type": "date"},
+                format="%Y-%m-%d",
+            ),
+        }
