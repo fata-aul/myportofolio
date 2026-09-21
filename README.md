@@ -82,3 +82,36 @@ Jadi menurut saya, menggunakan model membuat website lebih gampang dipelihara ka
 Jadi urutannya adalah makemigrations dulu baru migrate Saya harus membuat file migration-nya terlebih dahulu sebelum menjalankan perubahan tersebut ke database.
 
 Contoh perubahan model yang saya lakukan adalah ketika saya menambahkan field logo di model AcademicRecord dan field organization di model Experience.
+
+
+
+
+#### Tugas 3
+
+Di tugas ini saya diminta extend semua file html yang strukturnya sama ke template utama, terus nambahin form buat create, update, sama delete data di salah satu bagian portofolio saya selain experience yang udah ada, dan saya pilih bagian Academic Records karena section itu yang paling masuk akal buat ditambahin form-nya.
+
+Saya mulai dari bikin ModelForm baru di forms.py buat model AcademicRecord, field yang saya masukin itu level, institution, description, logo, started_at, sama ended_at biar user bisa isi semuanya lewat form tanpa perlu buka database manual. Setelah itu saya bikin view buat create sama update-nya, khusus buat yang update saya ambil dulu data yang mau diedit berdasarkan id-nya, baru itu saya masukin ke form supaya waktu di-submit datanya ke-update, bukan malah bikin data baru.
+
+Selain form, saya juga bikin fungsi buat ambil data Academic Records dalam bentuk JSON, terus di view buat nampilin halamannya saya coba ambil datanya lewat fungsi JSON itu juga baru saya deserialize lagi sebelum ditampilkan ke template, jadi bukan langsung query ke model kayak sebelumnya.
+
+Buat tampilannya saya sekalian benerin dikit css-nya juga, garis penghubung di card academic yang tadinya lurus putus-putus saya bikin jadi melengkung biar keliatan kayak timeline beneran, terus saya juga sempet iseng ganti warna tema dari oren ke gradasi biru-merah soalnya udah bosen liat oren mulu :))
+
+Kenapa pakai ModelForm daripada bikin form HTML manual, sama kenapa wajib nambahin csrf token di form tersebut
+
+Jadi saya pakai ModelForm karena itu otomatis nge-generate field-field form berdasarkan field yang udah ada di model, jadi saya ga perlu nulis manual satu-satu input buat tiap field, dan kalau nanti field di model berubah form-nya juga otomatis ikut nyesuaiin tanpa saya harus edit ulang html-nya. ModelForm juga otomatis nge-handle validasi data sesuai tipe field di model, misalnya field logo itu tipenya url, jadi form otomatis ngecek apakah yang diisi user itu link yang valid apa nggak, kalau saya bikin form manual pakai html doang saya harus nulis validasi itu sendiri di view jadi kerjaannya lebih banyak dan lebih gampang kelewat. Selain itu ModelForm juga langsung nyambung ke method save, jadi tinggal panggil save aja buat nyimpen data ke database, ga perlu manual ambil satu-satu data dari request terus bikin objectnya sendiri.
+
+Kalau soal csrf token, itu wajib karena Django secara default ngelindungin form dari serangan csrf atau cross site request forgery, yaitu serangan yang memanfaatkan session login user buat ngirim request tanpa sepengetahuan user itu sendiri. Contohnya kalau ga ada token itu, orang jahat bisa bikin form di website lain yang ngarah ke endpoint web saya, terus kalau user yang lagi login ke web saya ga sadar buka website itu, form-nya bisa ke-submit otomatis atas nama user tersebut tanpa dia sadar. Token csrf ini bakal generate token unik per session, jadi setiap request post yang ga bawa token yang valid otomatis bakal ditolak sama Django, jadi lumayan ngebantu ngamanin dari serangan kaya gitu.
+
+Kenapa JSON lebih disukai dibanding XML di pengembangan aplikasi web modern
+
+Menurut saya struktur JSON jauh lebih ringkas dibanding XML karena ga perlu closing tag, jadi ukuran datanya lebih kecil dan lebih cepat dikirim lewat jaringan. JSON juga lebih gampang dibaca sama manusia karena strukturnya mirip dictionary atau object yang emang udah familiar di banyak bahasa pemrograman termasuk javascript, jadi di sisi frontend parsing JSON itu udah bawaan javascript ga perlu library tambahan, beda kalau pakai XML yang biasanya butuh parser terpisah dan lebih ribet ngolahnya.
+
+Karena javascript itu bahasa yang paling umum dipakai di sisi frontend web, dan JSON sendiri emang berasal dari javascript object notation, jadi integrasinya paling natural buat aplikasi web modern yang banyak pakai fetch atau ajax buat komunikasi data ke server tanpa reload halaman. JSON juga lebih ringan buat diproses baik dari sisi server maupun client, jadi buat aplikasi web modern yang butuh response cepat kaya buat api, JSON jadi pilihan yang lebih optimal dibanding XML yang overhead parsingnya lebih besar.
+
+Alur yang terjadi saat menggunakan fungsi view buat ngembaliin data portofolio dalam bentuk JSON, dan kenapa perlu proses serialization dulu
+
+Waktu ada request get ke endpoint api misalnya buat ambil data academic, request itu pertama masuk ke urls.py, terus diarahkan ke view function yang sesuai. Di dalam function itu saya query datanya dulu ke model pakai objects.all, atau filter kalau ada query param kaya institution, hasilnya berupa queryset django yang isinya object-object model python, bukan format yang bisa langsung dikirim lewat http response sebagai teks JSON.
+
+Karena itu datanya perlu di-serialize dulu, saya pakai fungsi serialize dari django buat ngonversi object-object model django tadi jadi string JSON yang formatnya sesuai standar, isinya nama model, primary key, sama field-field datanya. Setelah itu hasil serialize tadi baru saya bungkus ke response dengan content type application json, biar browser atau client lain yang manggil endpoint ini tau kalau response-nya itu emang JSON bukan html biasa.
+
+Kenapa perlu serialization, karena object python atau queryset django itu punya struktur internal yang kompleks, ada method-methodnya, relasi antar model, dan lain-lain, yang ga bisa langsung diterjemahin jadi teks JSON tanpa proses konversi. Serialization ini yang tugasnya ngonversi struktur object python itu jadi representasi data yang lebih simpel dan universal, cuma berupa pasangan key value field dan valuenya, supaya bisa dibaca atau diparse sama sistem lain di luar django, misalnya javascript di sisi frontend atau aplikasi lain yang manggil api ini. Terus pas datanya mau ditampilin lagi ke template, saya deserialize lagi JSON yang tadi dihasilkan, itu proses kebalikannya, ngubah string JSON balik jadi object atau model instance python lagi, biar saya bisa akses attribute-nya kaya biasa buat ditampilin di template.

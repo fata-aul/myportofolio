@@ -1,5 +1,6 @@
 import uuid
 from datetime import date
+from django.contrib.auth.models import User
 
 from django.db import models
 
@@ -26,6 +27,10 @@ class Experience(models.Model):
     thumbnail = models.URLField(blank=True, null=True, max_length=500)
     started_at = models.DateField(default=date.today)
     ended_at = models.DateField(blank=True, null=True)
+    project_image_url = models.URLField(blank=True, max_length=500)
+    starred_by = models.ManyToManyField(
+        User, related_name="starred_projects", blank=True
+    )
 
     class Meta:
         ordering = ["category", "-started_at"]

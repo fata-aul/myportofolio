@@ -10,9 +10,11 @@
 
                 <div class="experience-head">
                     <h2 class="section-title">Experience</h2>
+                    {% if user.is_superuser %}
                     <a href="{% url 'main:create_experience' %}" class="button button-add">
                         <span aria-hidden="true">+</span> Tambah Pengalaman
                     </a>
+                    {% endif %}    
                 </div>
 
                 <form method="get"
@@ -63,7 +65,9 @@
                                             <span class="status-pill {% if experience.is_ongoing %}status-pill--ongoing{% endif %}">
                                                 {% if experience.is_ongoing %}Ongoing{% else %}Completed{% endif %}
                                             </span>
+                                            {% if user.is_superuser %}
                                             {% include "components/experience_delete_modal.html" with experience=experience %}
+                                            {% endif %}    
                                         </div>
                                     </div>
                                 </article>

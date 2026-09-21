@@ -1,0 +1,43 @@
+<p class="experience-status">
+    <button type="button"
+            class="button button-danger"
+            popovertarget="delete-academic-{{ record.id }}"
+            aria-label="Hapus {{ record.institution }}"
+            title="Hapus riwayat akademik">
+        Hapus
+    </button>
+</p>
+<div id="delete-academic-{{ record.id }}"
+     class="experience-delete-modal"
+     popover="auto"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="delete-academic-title-{{ record.id }}">
+    <button type="button"
+            class="experience-delete-modal__backdrop"
+            popovertarget="delete-academic-{{ record.id }}"
+            popovertargetaction="hide"
+            aria-label="Tutup konfirmasi hapus"></button>
+    <div class="experience-delete-modal__content">
+        <button type="button"
+                class="experience-delete-modal__close"
+                popovertarget="delete-academic-{{ record.id }}"
+                popovertargetaction="hide"
+                aria-label="Tutup konfirmasi hapus">&times;</button>
+        <h2 id="delete-academic-title-{{ record.id }}">Hapus Riwayat Akademik?</h2>
+        <p>
+            Apakah Anda yakin ingin menghapus riwayat akademik di
+            <strong>{{ record.institution }}</strong>?
+        </p>
+        <div class="experience-delete-modal__actions">
+            <button type="button"
+                    class="button button-secondary"
+                    popovertarget="delete-academic-{{ record.id }}"
+                    popovertargetaction="hide">Batal</button>
+            <form method="post" action="{% url 'main:delete_academic' record.id %}">
+                {% csrf_token %}
+                <button type="submit" class="button button-danger">Ya, Hapus</button>
+            </form>
+        </div>
+    </div>
+</div>

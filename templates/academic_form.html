@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>{% if academic_record %}Edit{% else %}Add{% endif %} Academic Record - {{ nama_lengkap }}</title>
+{% endblock meta %}
+{% block content %}
+    <main>
+        <section class="experience">
+            <div class="container">
+                <p class="section-kicker">
+                    {% if academic_record %}Perbarui riwayat akademikmu{% else %}Tambahkan riwayat akademik barumu{% endif %}
+                </p>
+                <h2 class="section-title">
+                    {% if academic_record %}Edit Academic Record{% else %}Add New Academic Record{% endif %}
+                </h2>
+
+                <div class="form-wrap">
+                    <div class="form-decor" aria-hidden="true"></div>
+                    <div class="form-decor-dot" aria-hidden="true"></div>
+                    <form method="post"
+                          action="{% if academic_record %}{% url 'main:update_academic' academic_record.id %}{% else %}{% url 'main:create_academic' %}{% endif %}"
+                          class="form-card">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="form-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <div class="form-actions">
+                            <a href="{% url 'main:show_academic' %}" class="button button-secondary">Batal</a>
+                            <button type="submit" class="button">
+                                {% if academic_record %}Simpan Perubahan{% else %}Simpan Riwayat{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock content %}

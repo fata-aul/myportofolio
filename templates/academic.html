@@ -6,8 +6,23 @@
     <main>
         <section class="education" id="academic">
             <div class="container">
+                <div class="experience-head">
+                    <h2 class="section-title">Academic Records</h2>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'main:create_academic' %}" class="button button-add">
+                        <span aria-hidden="true">+</span> Tambah Riwayat
+                    </a>
+                    {% endif %} 
+                </div>
                 <p class="section-kicker">My educational background</p>
-                <h2 class="section-title">Academic Records</h2>
+
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li class="message">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
 
                 {% if academic_list %}
                     <div class="education-timeline">
@@ -29,6 +44,15 @@
                                     <p class="timeline-status">
                                         {% if record.is_ongoing %}Ongoing{% else %}Completed{% endif %}
                                     </p>
+                                    <div class="experience-card-foot">
+                                        {% if user.is_superuser %}
+                                        <a href="{% url 'main:update_academic' record.id %}" class="button button-secondary">Edit
+                                        </a>
+                                        {% endif %} 
+                                        {% if user.is_superuser %}
+                                        {% include "components/academic_delete_modal.html" with record=record %}
+                                        {% endif %} 
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}

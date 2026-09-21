@@ -7,8 +7,9 @@
 :root {
     --ink: #1c1917;
     --paper: #faf6f0;
-    --accent: #d95d39;
-    --accent-dark: #a8442a;
+    --accent: #2f6fed;
+    --accent-dark: #e63946;
+    --gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
     --line: #e3d9c9;
     --text-muted: #6b6459;
     --radius: 4px;
@@ -138,7 +139,7 @@ h1, .brand {
 }
 
 .social-link:hover {
-    background-color: var(--accent);
+    background: var(--gradient);
 }
 
 .hero-photo {
@@ -153,7 +154,7 @@ h1, .brand {
     left: 1.25rem;
     width: 100%;
     height: 100%;
-    background-color: var(--accent);
+    background: var(--gradient);
     border-radius: var(--radius);
     z-index: 0;
 }
@@ -280,9 +281,9 @@ h1, .brand {
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background-image: linear-gradient(to right, var(--accent-dark) 60%, transparent 0%);
-    background-size: 14px 3px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='16' viewBox='0 0 44 16'%3E%3Cdefs%3E%3ClinearGradient id='wg' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%232f6fed'/%3E%3Cstop offset='100%25' stop-color='%23e63946'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 8 Q11 0 22 8 T44 8' fill='none' stroke='url(%23wg)' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-size: 44px 16px;
     background-repeat: repeat-x;
 }
 
@@ -290,6 +291,32 @@ h1, .brand {
     position: relative;
     z-index: 1;
     flex: 0 1 220px;
+}
+
+/* Batang penghubung dari garis melengkung turun ke kartu, biar nyatu */
+.timeline-node::before {
+    content: "";
+    position: absolute;
+    top: -1rem;
+    left: 50%;
+    width: 2px;
+    height: 1rem;
+    background: linear-gradient(var(--accent), var(--accent-dark));
+    transform: translateX(-50%);
+}
+
+/* Titik simpul yang duduk tepat di garis melengkung */
+.timeline-node::after {
+    content: "";
+    position: absolute;
+    top: -1.3rem;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2.5px solid var(--accent);
+    transform: translateX(-50%);
 }
 
 .timeline-card {
@@ -348,6 +375,26 @@ h1, .brand {
     font-weight: 600;
 }
 
+/* Aksi Edit & Hapus di kartu Academic Record (reuse .experience-card-foot,
+   tapi disesuaikan supaya pas di kartu timeline yang lebih sempit) */
+.timeline-card .experience-card-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+}
+
+.timeline-card .experience-status {
+    margin: 0;
+}
+
+.timeline-card .experience-card-foot .button {
+    width: 100%;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.78rem;
+}
+
 /* Di bawah 800px, timeline jadi list vertikal simpel — gaya sama seperti .experience-card */
 @media (max-width: 800px) {
     .education-timeline {
@@ -356,6 +403,11 @@ h1, .brand {
     }
 
     .education-timeline::before {
+        display: none;
+    }
+
+    .timeline-node::before,
+    .timeline-node::after {
         display: none;
     }
 
@@ -465,7 +517,7 @@ h1, .brand {
 .experience-search__input:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.15);
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.18);
 }
 
 .experience-search .button {
@@ -619,7 +671,7 @@ h1, .brand {
     border: 1px solid transparent;
     border-radius: 6px;
     padding: 0.62rem 1.05rem;
-    background: var(--accent);
+    background: var(--gradient);
     color: #fff;
     cursor: pointer;
     font: inherit;
@@ -632,7 +684,7 @@ h1, .brand {
 }
 
 .button:hover {
-    background: var(--accent-dark);
+    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
 }
 
 .button:active {
@@ -652,11 +704,11 @@ h1, .brand {
 }
 
 .button-danger {
-    background: #b42318;
+    background: var(--accent-dark);
 }
 
 .button-danger:hover {
-    background: #8f1c13;
+    background: #c1121f;
 }
 
 /* tombol hapus di kartu: tenang dulu, memerah saat disentuh */
@@ -679,9 +731,9 @@ h1, .brand {
 }
 
 .button-ghost-danger:hover {
-    color: #b42318;
-    border-color: rgba(180, 35, 24, 0.45);
-    background: rgba(180, 35, 24, 0.06);
+    color: var(--accent-dark);
+    border-color: rgba(230, 57, 70, 0.45);
+    background: rgba(230, 57, 70, 0.06);
 }
 
 /* ============================================================
@@ -782,7 +834,7 @@ h1, .brand {
 
 .form-group select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%23d95d39' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%232f6fed' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     padding-right: 2.5rem;
@@ -799,11 +851,11 @@ h1, .brand {
     outline: none;
     background: #fff;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.15);
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.18);
 }
 
 .form-error {
-    color: #b42318;
+    color: var(--accent-dark);
     font-size: 0.82rem;
     margin-top: 0.3rem;
 }
@@ -973,4 +1025,26 @@ h1, .brand {
     .experience-delete-modal__actions .button {
         width: 100%;
     }
+}
+
+.star-form {
+    display: inline;
+}
+
+.button-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--ink);
+}
+
+.button-star.is-starred {
+    background: var(--accent);
+}
+
+.star-count {
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.25);
+    font-size: 0.8rem;
 }
