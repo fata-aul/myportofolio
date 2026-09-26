@@ -62,6 +62,7 @@
                                         {% endif %}
                                         <p class="experience-desc">{{ experience.description }}</p>
                                         <div class="experience-card-foot">
+                                            {% include "components/experience_star.html" with experience=experience %}
                                             <span class="status-pill {% if experience.is_ongoing %}status-pill--ongoing{% endif %}">
                                                 {% if experience.is_ongoing %}Ongoing{% else %}Completed{% endif %}
                                             </span>
