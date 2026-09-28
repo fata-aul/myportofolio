@@ -21,6 +21,11 @@ PROFILE = {
     "bio": "A Computer Science student thats hopefully graduate on time",
 }
 
+def require_editor(user):
+    if not (user.is_superuser or user.groups.filter(name ="Editor").exists()):
+        raise PermissionDenied
+    
+
 
 def show_main(request):
     last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
@@ -44,7 +49,7 @@ def get_experiences_json(request):
     if title_query:
         experiences = experiences.filter(title__icontains=title_query)
 
-    experiences_json = serializers.serialize("json", experiences)
+    experiences_json = serializers.serialize("json", experiences, use_natural_foreign_keys = True)
     return HttpResponse(experiences_json, content_type="application/json")
 
 
@@ -98,6 +103,22 @@ def delete_experience(request, experience_id):
 
     return redirect("main:show_experience")
 
+@login_required(login_url="/login/") 
+def update_experience(request, experience_id):
+    require_editor(request.user)
+    experience = get_object_or_404(Experience, pk=experience_id)
+    form = ExperienceForm(request.POST or None, instance=experience)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Experience berhasil diperbarui!")
+        return redirect("main:show_experience")
+
+    context = dict(PROFILE)
+    context["form"] = form
+    context["experience"] = experience
+    return render(request, "experience_form.html", context)
+
 
 def get_academic_json(request):
     institution_query = request.GET.get("institution", "").strip()
@@ -145,8 +166,7 @@ def create_academic(request):
 
 @login_required(login_url="/login/") 
 def update_academic(request, academic_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_editor(request.user)
     academic_record = get_object_or_404(AcademicRecord, pk=academic_id)
     form = AcademicRecordForm(request.POST or None, instance=academic_record)
 
@@ -209,7 +229,7 @@ def logout_user(request):
     return response
 
 
-@login_required(login_url="/login/")
+
 @login_required(login_url="/login/")
 def toggle_star(request, experience_id):
     experience = get_object_or_404(Experience, pk=experience_id)

@@ -46,9 +46,10 @@
                                     </p>
                                     <div class="experience-card-foot">
                                         {% if user.is_superuser %}
-                                        <a href="{% url 'main:update_academic' record.id %}" class="button button-secondary">Edit
-                                        </a>
-                                        {% endif %} 
+                                        <a href="{%url 'main:update_academic' record.id%}" class="button button-secondary">Edit</a>
+                                        {% else %}{% for g in user.groups.all %}{% if g.name == "Editor"%}
+                                        <a href="{%url 'main:update_academic' record.id%}" class="button button-secondary">Edit</a>
+                                        {% endif %}{% endfor %}{% endif %} 
                                         {% if user.is_superuser %}
                                         {% include "components/academic_delete_modal.html" with record=record %}
                                         {% endif %} 
