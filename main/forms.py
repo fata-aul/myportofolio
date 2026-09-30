@@ -1,4 +1,7 @@
+from django.core.exceptions import ValidationError
 from django.forms import DateInput, ModelForm, Select, Textarea, TextInput, URLInput
+
+from django.utils.html import strip_tags
 
 from main.models import AcademicRecord, Experience
 
@@ -60,6 +63,22 @@ class ExperienceForm(ModelForm):
                 format="%Y-%m-%d",
             ),
         }
+
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise ValidationError("Nama pengalaman tidak boleh hanya berisi tag HTML.")
+        return title
+
+    def clean_organization(self):
+        return strip_tags(self.cleaned_data["organization"]).strip()
+
+    def clean_description(self):
+        description = strip_tags(self.cleaned_data["description"]).strip()
+        if not description:
+            raise ValidationError("Deskripsi tidak boleh hanya berisi tag HTML.")
+        return description
+
 
 class AcademicRecordForm(ModelForm):
     class Meta:

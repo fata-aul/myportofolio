@@ -15,7 +15,8 @@ from main.views import (
     login_user,
     logout_user,
     toggle_star,
-    update_experience
+    update_experience,
+    create_experience_ajax,
 )
 
 app_name = "main"
@@ -55,5 +56,11 @@ urlpatterns = [
     "experience/<uuid:experience_id>/edit/",
     update_experience,
     name="update_experience",
+    ),
+    
+    path(
+        "experience/add-ajax/",
+        create_experience_ajax,
+        name="create_experience_ajax",
     ),
 ]

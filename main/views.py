@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth import login, logout
@@ -11,7 +11,9 @@ import datetime
 from main.forms import AcademicRecordForm, ExperienceForm
 from main.models import AcademicRecord, Experience
 from django.contrib.auth.decorators import login_required  
-from django.core.exceptions import PermissionDenied        
+from django.core.exceptions import PermissionDenied
+from django.utils.formats import date_format
+from django.views.decorators.http import require_POST
 
 PROFILE = {
     "name": "Fata",
@@ -44,36 +46,52 @@ def show_main(request):
 
 def get_experiences_json(request):
     title_query = request.GET.get("title", "").strip()
-    experiences = Experience.objects.all()
+    experiences = Experience.objects.prefetch_related("starred_by").all()
 
     if title_query:
         experiences = experiences.filter(title__icontains=title_query)
 
-    experiences_json = serializers.serialize("json", experiences, use_natural_foreign_keys = True)
-    return HttpResponse(experiences_json, content_type="application/json")
+    data = []
+    for experience in experiences:
+        starred_users = list(experience.starred_by.all())  
+        is_starred = (
+            request.user in starred_users if request.user.is_authenticated else False
+        )
+        data.append(
+            {
+                "pk": str(experience.id),
+                "fields": {
+                    "title": experience.title,
+                    "organization": experience.organization,
+                    "description": experience.description,
+                    "category": experience.category,
+                    "category_label": experience.get_category_display(),
+                    "thumbnail": experience.thumbnail or "",
+                    "started_label": date_format(experience.started_at, "M Y"),
+                    "ended_label": (
+                        date_format(experience.ended_at, "M Y")
+                        if experience.ended_at
+                        else "Sekarang"
+                    ),
+                    "is_ongoing": experience.is_ongoing,
+                    "star_count": len(starred_users),
+                    "is_starred": is_starred,
+                    "starred_by_names": ", ".join(u.username for u in starred_users),
+                },
+            }
+        )
+
+    return JsonResponse(data, safe=False)
 
 
 def show_experience(request):
-    json_response = get_experiences_json(request)
+    title_query = request.GET.get("title", "").strip()
 
-    experiences = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    experiences = [experience.object for experience in experiences]
-
-    groups = []
-    group_by_label = {}
-    for experience in experiences:
-        label = experience.get_category_display()
-        if label not in group_by_label:
-            group_by_label[label] = {"label": label, "items": []}
-            groups.append(group_by_label[label])
-        group_by_label[label]["items"].append(experience)
-
-    context = dict(PROFILE)
-    context["experience_groups"] = groups
-    context["title_query"] = request.GET.get("title", "").strip()
+    context = {
+        "name": "Fata",
+        "title_query": title_query,
+    }
+    context["form"] = ExperienceForm()
     return render(request, "experience.html", context)
 
 @login_required(login_url="/login/") 
@@ -241,3 +259,23 @@ def toggle_star(request, experience_id):
             experience.starred_by.add(request.user)
 
     return redirect("main:show_experience")
+
+
+@require_POST
+def create_experience_ajax(request):
+ 
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan pengalaman."},
+            status=403,
+        )
+
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
