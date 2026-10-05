@@ -147,22 +147,39 @@ def get_academic_json(request):
             institution__icontains=institution_query
         )
 
-    academic_json = serializers.serialize("json", academic_records)
-    return HttpResponse(academic_json, content_type="application/json")
+    # JSON dirakit manual dengan JsonResponse
+    data = []
+    for record in academic_records:
+        data.append(
+            {
+                "pk": str(record.id),
+                "fields": {
+                    "level": record.level,
+                    "level_label": record.get_level_display(),
+                    "institution": record.institution,
+                    "description": record.description,
+                    "logo": record.logo or "",
+                    "started_year": record.started_at.year,
+                    "ended_year": record.ended_at.year if record.ended_at else None,
+                    "is_ongoing": record.is_ongoing,
+                },
+            }
+        )
+
+    return JsonResponse(data, safe=False)
 
 
 def show_academic(request):
-    json_response = get_academic_json(request)
-
-    academic_records = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
+    # Halaman hanya merender kerangka; datanya diambil JS lewat get_academic_json
+    is_editor = (
+        request.user.is_authenticated
+        and request.user.groups.filter(name="Editor").exists()
     )
-    academic_records = [record.object for record in academic_records]
 
     context = dict(PROFILE)
-    context["academic_list"] = academic_records
     context["institution_query"] = request.GET.get("institution", "").strip()
+    context["form"] = AcademicRecordForm()
+    context["is_editor"] = is_editor
     return render(request, "academic.html", context)
 
 
@@ -275,6 +292,25 @@ def create_experience_ajax(request):
         experience = form.save()
         return JsonResponse(
             {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+
+@require_POST
+def create_academic_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan riwayat akademik."},
+            status=403,
+        )
+
+    form = AcademicRecordForm(request.POST)
+    if form.is_valid():
+        record = form.save()
+        return JsonResponse(
+            {"message": "Riwayat akademik berhasil ditambahkan.", "pk": str(record.id)},
             status=201,
         )
 

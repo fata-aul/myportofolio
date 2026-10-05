@@ -9,59 +9,262 @@
                 <div class="experience-head">
                     <h2 class="section-title">Academic Records</h2>
                     {% if user.is_superuser %}
-                    <a href="{% url 'main:create_academic' %}" class="button button-add">
+                    <button type="button"
+                            class="button button-add"
+                            popovertarget="add-academic-modal">
                         <span aria-hidden="true">+</span> Tambah Riwayat
-                    </a>
-                    {% endif %} 
+                    </button>
+                    {% endif %}
                 </div>
                 <p class="section-kicker">My educational background</p>
 
-                {% if messages %}
-                    <ul class="messages">
-                        {% for message in messages %}
-                            <li class="message">{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                <form id="academic-search-form" class="experience-search">
+                    <input type="search"
+                           id="search-input"
+                           name="institution"
+                           value="{{ institution_query }}"
+                           placeholder="Cari berdasarkan institusi&hellip;"
+                           class="experience-search__input"
+                           aria-label="Cari berdasarkan nama institusi">
+                    <button type="submit" class="button">Cari</button>
+                </form>
 
-                {% if academic_list %}
-                    <div class="education-timeline">
-                        {% for record in academic_list %}
-                            <div class="timeline-node">
-                                <div class="timeline-card">
-                                    {% if record.logo %}
-                                        <img class="timeline-logo" src="{{ record.logo }}" alt="{{ record.institution }} logo">
-                                    {% endif %}
-                                    <h4>{{ record.get_level_display }}</h4>
-                                    <p>{{ record.institution }}</p>
-                                    {% if record.description %}
-                                        <p class="timeline-desc">{{ record.description }}</p>
-                                    {% endif %}
-                                    <span>
-                                        {{ record.started_at|date:"Y" }} &ndash;
-                                        {% if record.ended_at %}{{ record.ended_at|date:"Y" }}{% else %}Ongoing{% endif %}
-                                    </span>
-                                    <p class="timeline-status">
-                                        {% if record.is_ongoing %}Ongoing{% else %}Completed{% endif %}
-                                    </p>
-                                    <div class="experience-card-foot">
-                                        {% if user.is_superuser %}
-                                        <a href="{%url 'main:update_academic' record.id%}" class="button button-secondary">Edit</a>
-                                        {% else %}{% for g in user.groups.all %}{% if g.name == "Editor"%}
-                                        <a href="{%url 'main:update_academic' record.id%}" class="button button-secondary">Edit</a>
-                                        {% endif %}{% endfor %}{% endif %} 
-                                        {% if user.is_superuser %}
-                                        {% include "components/academic_delete_modal.html" with record=record %}
-                                        {% endif %} 
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="empty-state">No academic record has been added yet.</p>
-                {% endif %}
+                <!-- Loading State -->
+                <div id="loading" class="empty-state hide">
+                    <p>Memuat riwayat akademik...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="error" class="empty-state hide">
+                    <p>Gagal memuat data riwayat akademik. Silakan coba lagi.</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty" class="empty-state hide">
+                    <p id="empty-message">Belum ada riwayat akademik yang ditambahkan.</p>
+                </div>
+
+                <!-- Timeline (diisi oleh JavaScript) -->
+                <div id="grid" class="education-timeline hide"></div>
             </div>
         </section>
     </main>
+
+    {% if user.is_superuser %}
+        {% include "components/academic_form_modal.html" %}
+    {% endif %}
+
+    <script>
+        // Konfigurasi
+        const BASE_ACADEMIC_ENDPOINT = "{% url 'main:get_academic_json' %}";
+        const CREATE_ACADEMIC_ENDPOINT = "{% url 'main:create_academic_ajax' %}";
+        const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+        const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+        const SEARCH_DEBOUNCE_DELAY = 300;
+        let academicAbortController;
+        let searchDebounceTimer;
+
+        // Elemen DOM
+        const loadingState = document.getElementById('loading');
+        const errorState = document.getElementById('error');
+        const emptyState = document.getElementById('empty');
+        const emptyMessage = document.getElementById('empty-message');
+        const gridContainer = document.getElementById('grid');
+        const searchForm = document.getElementById('academic-search-form');
+        const searchInput = document.getElementById('search-input');
+        const academicForm = document.getElementById('academic-form');
+
+        // Menyembunyikan/menampilkan section halaman
+        function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false }) {
+            loadingState.classList.toggle('hide', !showLoading);
+            errorState.classList.toggle('hide', !showError);
+            emptyState.classList.toggle('hide', !showEmpty);
+            gridContainer.classList.toggle('hide', !showGrid);
+        }
+
+        // Mengubah karakter khusus HTML menjadi entity agar ditampilkan sebagai teks
+        // (menggantikan auto-escaping template Django yang hilang saat memakai innerHTML)
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        // Membuat elemen node timeline untuk satu riwayat akademik
+        function buildAcademicNodeElement(item) {
+            const record = item.fields;
+            const recordId = item.pk;
+
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'timeline-node';
+
+            // Dummy UUID diganti dengan ID asli dari data JSON
+            const DUMMY_ID = '00000000-0000-0000-0000-000000000000';
+            const editUrl = "{% url 'main:update_academic' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, recordId);
+            const deleteUrl = "{% url 'main:delete_academic' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, recordId);
+
+            const logoHtml = record.logo
+                ? `<img class="timeline-logo" src="${escapeHtml(record.logo)}" alt="${escapeHtml(record.institution)} logo">`
+                : '';
+            const descHtml = record.description
+                ? `<p class="timeline-desc">${escapeHtml(record.description)}</p>`
+                : '';
+            const endLabel = record.ended_year ? record.ended_year : 'Ongoing';
+
+            const editHtml = (IS_SUPERUSER || IS_EDITOR)
+                ? `<a href="${editUrl}" class="button button-secondary">Edit</a>`
+                : '';
+            const deleteHtml = IS_SUPERUSER
+                ? `<form method="post" action="${deleteUrl}" class="experience-status">
+                        {% csrf_token %}
+                        <button type="submit" class="button button-danger" onclick="return confirm('Yakin ingin menghapus riwayat akademik ini?');">Hapus</button>
+                   </form>`
+                : '';
+
+            nodeElement.innerHTML = `
+                <div class="timeline-card">
+                    ${logoHtml}
+                    <h4>${escapeHtml(record.level_label)}</h4>
+                    <p>${escapeHtml(record.institution)}</p>
+                    ${descHtml}
+                    <span>${escapeHtml(record.started_year)} &ndash; ${escapeHtml(endLabel)}</span>
+                    <p class="timeline-status">${record.is_ongoing ? 'Ongoing' : 'Completed'}</p>
+                    <div class="experience-card-foot">
+                        ${editHtml}
+                        ${deleteHtml}
+                    </div>
+                </div>
+            `;
+            return nodeElement;
+        }
+
+        // Fetch data academic
+        async function fetchAcademic(searchQuery = "") {
+            if (academicAbortController) academicAbortController.abort();
+            academicAbortController = new AbortController();
+
+            try {
+                displayPageSection({ showLoading: true });
+
+                const url = searchQuery
+                    ? `${BASE_ACADEMIC_ENDPOINT}?institution=${encodeURIComponent(searchQuery)}`
+                    : BASE_ACADEMIC_ENDPOINT;
+
+                const response = await fetch(url, {
+                    headers: { 'Accept': 'application/json' },
+                    signal: academicAbortController.signal,
+                });
+                if (!response.ok) throw new Error('Failed to fetch data');
+
+                const academicData = await response.json();
+
+                if (academicData.length === 0) {
+                    emptyMessage.textContent = searchQuery
+                        ? 'Tidak ada riwayat akademik dengan institusi tersebut.'
+                        : 'Belum ada riwayat akademik yang ditambahkan.';
+                    displayPageSection({ showEmpty: true });
+                } else {
+                    gridContainer.innerHTML = '';
+                    academicData.forEach(item => {
+                        gridContainer.appendChild(buildAcademicNodeElement(item));
+                    });
+                    displayPageSection({ showGrid: true });
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') return;
+                console.error('Error loading academic records:', error);
+                displayPageSection({ showError: true });
+            }
+        }
+
+        // Pencarian dengan debouncing
+        function searchAcademic() {
+            fetchAcademic(searchInput.value.trim());
+        }
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(searchAcademic, SEARCH_DEBOUNCE_DELAY);
+        });
+
+        searchForm.addEventListener('submit', function (event) {
+            event.preventDefault(); // Mencegah reload halaman
+            clearTimeout(searchDebounceTimer);
+            searchAcademic();
+        });
+
+        // Modal tambah academic record
+        function closeAcademicModal() {
+            document.getElementById('add-academic-modal').hidePopover();
+        }
+
+        // Membaca nilai cookie, digunakan untuk mengambil token CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Mengirim data form ke server
+        async function addAcademic(event) {
+            event.preventDefault();
+
+            const submitButton = academicForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(CREATE_ACADEMIC_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    body: new FormData(academicForm),
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    academicForm.reset();
+                    closeAcademicModal();
+                    showToast('Berhasil', 'Riwayat akademik baru berhasil ditambahkan!', 'success');
+                    fetchAcademic(searchInput.value.trim());
+                } else {
+                    const errorMessages = result.errors
+                        ? Object.values(result.errors).flat().map(error => error.message)
+                        : [result.message || `Terjadi kesalahan (status ${response.status}).`];
+                    showToast('Gagal menambahkan riwayat akademik', errorMessages.join(' '), 'error');
+                }
+            } catch (error) {
+                console.error('Error adding academic record:', error);
+                showToast('Gagal menambahkan riwayat akademik', 'Tidak dapat terhubung ke server. Silakan coba lagi.', 'error');
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+
+        // Modal hanya ada untuk superuser, jadi academicForm bisa bernilai null
+        if (academicForm) {
+            academicForm.addEventListener('submit', addAcademic);
+        }
+
+        // Pesan dari Django (misalnya setelah hapus) ditampilkan sebagai toast
+        document.addEventListener('DOMContentLoaded', function () {
+            {% for message in messages %}
+            showToast('Info', '{{ message|escapejs }}', '{% if message.tags == "error" %}error{% else %}success{% endif %}');
+            {% endfor %}
+        });
+
+        // Start application
+        fetchAcademic(searchInput.value.trim());
+    </script>
 {% endblock content %}

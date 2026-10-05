@@ -115,3 +115,65 @@ Waktu ada request get ke endpoint api misalnya buat ambil data academic, request
 Karena itu datanya perlu di-serialize dulu, saya pakai fungsi serialize dari django buat ngonversi object-object model django tadi jadi string JSON yang formatnya sesuai standar, isinya nama model, primary key, sama field-field datanya. Setelah itu hasil serialize tadi baru saya bungkus ke response dengan content type application json, biar browser atau client lain yang manggil endpoint ini tau kalau response-nya itu emang JSON bukan html biasa.
 
 Kenapa perlu serialization, karena object python atau queryset django itu punya struktur internal yang kompleks, ada method-methodnya, relasi antar model, dan lain-lain, yang ga bisa langsung diterjemahin jadi teks JSON tanpa proses konversi. Serialization ini yang tugasnya ngonversi struktur object python itu jadi representasi data yang lebih simpel dan universal, cuma berupa pasangan key value field dan valuenya, supaya bisa dibaca atau diparse sama sistem lain di luar django, misalnya javascript di sisi frontend atau aplikasi lain yang manggil api ini. Terus pas datanya mau ditampilin lagi ke template, saya deserialize lagi JSON yang tadi dihasilkan, itu proses kebalikannya, ngubah string JSON balik jadi object atau model instance python lagi, biar saya bisa akses attribute-nya kaya biasa buat ditampilin di template.
+
+
+
+###### Tugas 5
+
+Di tugas ini saya melanjutkan bagian Academic Records dari tugas
+sebelumnya. Kali ini saya coba bikin prosesnya lebih interaktif dengan
+AJAX dan toast, jadi user gak harus reload halaman setiap kali melakukan
+proses yang berhubungan dengan data. Data Academic Records juga saya
+ambil lewat endpoint JSON, jadi halaman bisa mengambil data setelah
+kerangka halaman selesai dimuat.
+
+Untuk bagian pencarian, saya menggunakan AJAX supaya data bisa dicari
+tanpa harus reload halaman. Saya juga menambahkan debounce supaya
+request gak langsung dikirim setiap kali user mengetik satu karakter.
+Request baru dikirim setelah user berhenti mengetik sebentar. Menurut
+saya ini lebih enak karena pencarian tetap terasa cepat, tapi server
+juga gak menerima request yang sebenarnya gak perlu.
+
+Selain pencarian, saya juga menggunakan toast sebagai feedback ke user.
+Jadi ketika proses berhasil atau gagal, user bisa langsung melihat
+pesannya di halaman tanpa harus pindah halaman dulu. Menurut saya ini
+lebih nyaman daripada cuma mengandalkan redirect atau pesan yang baru
+kelihatan setelah halaman di-reload.
+
+Untuk request yang menggunakan fetch(), saya menggunakan await supaya
+proses berikutnya menunggu response dari server terlebih dahulu. Setelah
+response diterima, datanya baru diproses dan ditampilkan ke halaman.
+Pada request POST, saya juga tetap mengirim token CSRF supaya request
+dari JavaScript tetap mengikuti perlindungan CSRF dari Django.
+
+Debouncing adalah cara untuk menunda sebuah proses sampai user
+berhenti melakukan suatu aksi selama waktu tertentu. Di fitur
+pencarian AJAX, ini berguna karena kalau gak pakai debounce, setiap
+karakter yang diketik bisa langsung membuat request baru ke server.
+Misalnya user mengetik "Universitas", server bisa menerima banyak
+request dari "U", "Un", "Uni", dan seterusnya. Dengan debounce,
+request baru dikirim setelah user berhenti mengetik sebentar, jadi
+jumlah request lebih sedikit dan pencariannya juga lebih efisien.
+
+await digunakan supaya program menunggu hasil dari fetch() sebelum
+lanjut ke proses berikutnya. Karena fetch() berjalan secara
+asynchronous, hasil request gak langsung tersedia ketika fetch()
+dipanggil. Kalau gak pakai await, kode setelahnya bisa dijalankan
+dulu sebelum response selesai diterima, sehingga data yang mau
+dipakai belum tersedia. Dengan await, saya bisa menunggu response
+selesai dulu, baru membaca JSON-nya dan menampilkan data ke halaman.
+
+XSS atau Cross-Site Scripting adalah serangan ketika script
+berbahaya berhasil masuk ke halaman web melalui data yang berasal
+dari user atau sumber lain. Data yang ditampilkan lewat
+AJAX/JavaScript perlu diperhatikan karena data tersebut dimasukkan
+ke halaman setelah HTML dari server selesai dibuat. Kalau data
+langsung dimasukkan sebagai HTML mentah, script berbahaya bisa ikut
+dijalankan oleh browser. Karena itu saya harus hati-hati saat
+memasukkan data dari response AJAX ke halaman dan sebisa mungkin
+memperlakukannya sebagai teks biasa. Kalau dibandingkan dengan
+template Django, Django sudah membantu melakukan escaping pada data
+yang ditampilkan lewat template sehingga isi seperti tag script
+biasanya tidak langsung dijalankan. Jadi ketika menggunakan
+AJAX/JavaScript, saya tetap harus memperhatikan cara data tersebut
+dimasukkan ke halaman supaya gak membuka celah XSS.

@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -84,26 +85,111 @@ class AcademicTest(TestCase):
         self.assertEqual(self.record.level, "undergraduate")
         self.assertTrue(self.record.is_ongoing)
 
-    def test_academic_page_shows_data_when_not_empty(self):
+    def test_academic_page_renders_skeleton_only(self):
         response = self.client.get(reverse("main:show_academic"))
 
-        self.assertContains(response, self.record.institution)
-        self.assertContains(response, self.record.description)
-        self.assertContains(response, "Undergraduate")
-        self.assertContains(response, "Ongoing")
+        # Data tidak lagi dirender server; diambil JS lewat endpoint JSON
+        self.assertNotContains(response, self.record.institution)
+        self.assertContains(response, 'id="loading"')
+        self.assertContains(response, 'id="error"')
+        self.assertContains(response, 'id="empty"')
+        self.assertContains(response, reverse("main:get_academic_json"))
         self.assertContains(response, f'href="{reverse("main:show_main")}"')
 
-    def test_academic_page_shows_empty_message_when_empty(self):
-        AcademicRecord.objects.all().delete()
-        response = self.client.get(reverse("main:show_academic"))
+    def test_academic_json_returns_data(self):
+        response = self.client.get(reverse("main:get_academic_json"))
 
-        self.assertContains(response, "No academic record has been added yet.")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        fields = data[0]["fields"]
+        self.assertEqual(data[0]["pk"], str(self.record.id))
+        self.assertEqual(fields["institution"], "Universitas Indonesia")
+        self.assertEqual(fields["level_label"], "Undergraduate")
+        self.assertTrue(fields["is_ongoing"])
+        self.assertIsNone(fields["ended_year"])
 
-    def test_completed_academic_record(self):
+    def test_academic_json_search(self):
+        found = self.client.get(
+            reverse("main:get_academic_json"), {"institution": "indonesia"}
+        )
+        missing = self.client.get(
+            reverse("main:get_academic_json"), {"institution": "xyz"}
+        )
+
+        self.assertEqual(len(found.json()), 1)
+        self.assertEqual(missing.json(), [])
+
+    def test_academic_json_completed_record(self):
         self.record.ended_at = timezone.now()
         self.record.save()
-        response = self.client.get(reverse("main:show_academic"))
+        fields = self.client.get(reverse("main:get_academic_json")).json()[0]["fields"]
 
-        self.assertFalse(self.record.is_ongoing)
-        self.assertContains(response, "Completed")
-        self.assertNotContains(response, "Ongoing")
+        self.assertFalse(fields["is_ongoing"])
+        self.assertEqual(fields["ended_year"], timezone.now().year)
+
+
+class AcademicAjaxCreateTest(TestCase):
+    payload = {
+        "level": "undergraduate",
+        "institution": "Universitas Indonesia",
+        "description": "S1 Ilmu Komputer",
+        "logo": "",
+        "started_at": "2025-08-01",
+        "ended_at": "",
+    }
+
+    def setUp(self):
+        self.url = reverse("main:create_academic_ajax")
+        self.superuser = User.objects.create_superuser("owner", password="pass12345")
+        self.regular = User.objects.create_user("visitor", password="pass12345")
+
+    def test_anonymous_gets_403_json(self):
+        response = self.client.post(self.url, self.payload)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("message", response.json())
+        self.assertEqual(AcademicRecord.objects.count(), 0)
+
+    def test_regular_user_gets_403_json(self):
+        self.client.login(username="visitor", password="pass12345")
+        response = self.client.post(self.url, self.payload)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(AcademicRecord.objects.count(), 0)
+
+    def test_get_not_allowed(self):
+        self.client.login(username="owner", password="pass12345")
+
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+    def test_superuser_creates_record_201(self):
+        self.client.login(username="owner", password="pass12345")
+        response = self.client.post(self.url, self.payload)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(AcademicRecord.objects.count(), 1)
+
+    def test_invalid_input_gets_400_with_errors(self):
+        self.client.login(username="owner", password="pass12345")
+        response = self.client.post(self.url, {**self.payload, "institution": ""})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("institution", response.json()["errors"])
+        self.assertEqual(AcademicRecord.objects.count(), 0)
+
+    def test_html_only_institution_is_rejected(self):
+        self.client.login(username="owner", password="pass12345")
+        response = self.client.post(
+            self.url,
+            {**self.payload, "institution": "<img src=x onerror=alert(1)>"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(AcademicRecord.objects.count(), 0)
+
+    def test_html_tags_are_stripped_from_description(self):
+        self.client.login(username="owner", password="pass12345")
+        self.client.post(self.url, {**self.payload, "description": "Halo <b>dunia</b>"})
+
+        self.assertEqual(AcademicRecord.objects.get().description, "Halo dunia")

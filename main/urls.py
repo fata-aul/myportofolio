@@ -2,6 +2,7 @@ from django.urls import path
 
 from main.views import (
     create_academic,
+    create_academic_ajax,
     create_experience,
     delete_academic,
     delete_experience,
@@ -44,6 +45,11 @@ urlpatterns = [
         name="delete_academic",
     ),
     path("api/academic/", get_academic_json, name="get_academic_json"),
+    path(
+        "academic/add-ajax/",
+        create_academic_ajax,
+        name="create_academic_ajax",
+    ),
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
